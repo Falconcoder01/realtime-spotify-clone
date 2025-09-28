@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spotify-backend
+  namespace: realtime-spotify
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 25%
+  selector:
+    matchLabels:
+      app: spotify-backend
+  template:
+    metadata:
+      labels:
+        app: spotify-backend
+    spec:
+      containers:
+        - name: backend
+          image: 665871827975.dkr.ecr.us-east-2.amazonaws.com/spotify-backend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5000
+              name: http
+          env:
+          - name: MONGO_CONN_STR
+            value: mongodb://mongo:27017/spotify?directConnection=true
+          - name: MONGO_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: spotify-secret
+                key: username
+          - name: MONGO_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: spotify-secret
+                key: password
+          envFrom:
+            - configMapRef:
+                name: spotify-config
+            - secretRef:
+                name: spotify-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spotify-backend
+  namespace: realtime-spotify
+spec:
+  selector:
+    app: spotify-backend
+  ports:
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000
+  type: ClusterIP

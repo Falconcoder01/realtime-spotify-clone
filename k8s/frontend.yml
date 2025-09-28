@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spotify-frontend
+  namespace: realtime-spotify
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 25%
+  selector:
+    matchLabels:
+      app: spotify-frontend
+  template:
+    metadata:
+      labels:
+        app: spotify-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: 665871827975.dkr.ecr.us-east-2.amazonaws.com/spotify-frontend:latest
+          imagePullPolicy: Always
+          env:
+            - name: REACT_APP_BACKEND_URL
+              value: "http://spotify.utkarshdevops.gt.tc/api/album"
+              value: "http://spotify.utkarshdevops.gt.tc/api/message"
+              value: "http://spotify.utkarshdevops.gt.tc/api/song"
+              value: "http://spotify.utkarshdevops.gt.tc/api/user"
+          ports:
+            - containerPort: 80
+              name: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spotify-frontend
+  namespace: realtime-spotify
+spec:
+  selector:
+    app: spotify-frontend
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: ClusterIP
+
